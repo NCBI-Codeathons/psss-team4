@@ -25,6 +25,6 @@ gcloud compute ssh ${instance_name} --zone ${zone} -- sudo update-alternatives -
 
 gcloud compute ssh ${instance_name} --zone ${zone} -- curl -LO "https://dl.k8s.io/release/$(curl -L -s https://dl.k8s.io/release/stable.txt)/bin/linux/amd64/kubectl"
 gcloud compute ssh ${instance_name} --zone ${zone} -- sudo install -o root -g root -m 0755 kubectl /usr/local/bin/kubectl
-gcloud compute ssh ${instance_name} --zone ${zone} -- sudo apt-get install -yq python3-distutils python3-pip
+gcloud compute ssh ${instance_name} --zone ${zone} -- sudo apt-get install -yq python3-distutils python3-pip ncbi-blast+
 
 gcloud compute ssh ${instance_name} --zone ${zone} -- sudo pip3 install elastic-blast
