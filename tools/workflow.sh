@@ -8,3 +8,4 @@ makeblastdb -dbtype nucl -in $genbank_fa -out $genbank
 
 # ElasticBLAST
 # edit elastic-blast .ini
+elastic-blast submit --cfg elastic-blast.ini --loglevel # wait for return
