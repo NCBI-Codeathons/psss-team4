@@ -12,6 +12,7 @@ export ELB_GCP_PROJECT=codeathon-psss-2021
 export ELB_GCP_REGION=us-east4
 export ELB_GCP_ZONE=us-east4-c
 export ELB_LOGLEVEL=DEBUG
+export ELB_DISABLE_AUTO_SHUTDOWN=1
 
 elastic-blast --version
 
