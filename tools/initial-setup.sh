@@ -18,7 +18,8 @@ zone=us-east4-c
 
 gsutil ls ${bucket} >& /dev/null || gsutil mb -c standard -l ${region} ${bucket}
 
-#gcloud projects add-iam-policy-binding ${gcp_project} --member=$svc_account --role=roles/container.admin
+# This is needed for the auto-shutdown functionality to work
+gcloud projects add-iam-policy-binding ${gcp_project} --member=$svc_account --role=roles/container.admin
 
 gcloud compute instances create ${instance_name} --project=${gcp_project} --zone=${zone} --machine-type=e2-standard-32 \
     --network-interface=network-tier=PREMIUM,subnet=subnet-us-east4 --maintenance-policy=MIGRATE \
