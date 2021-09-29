@@ -1,5 +1,5 @@
 # INPUT
-genbank="NC_045512"
+genbank="${1%.fa}"
 
 # intermediate files
 genbank_fa="$genbank.fa"
