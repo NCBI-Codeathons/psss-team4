@@ -15,9 +15,29 @@ export ELB_LOGLEVEL=DEBUG
 
 elastic-blast --version
 
-elastic-blast submit --db pdbnt --query gs://elastic-blast-samples/queries/MANE/MANE.GRCh38.v0.8.select_refseq_rna.fna --program blastn --results ${results_bucket} \
-    --num-nodes 1 \
-    --machine-type n1-standard-32 \
-    --num-cpus 2 \
-    --mem-limit 1G \
-    -- -outfmt '7 std staxids'
+CFG=`mktemp -t $(basename -s .sh $0)-XXXXXXX`
+trap " /bin/rm -fr $CFG " INT QUIT EXIT HUP KILL ALRM
+
+cat >$CFG <<EOF
+[cloud-provider]
+gcp-project = $ELB_GCP_PROJECT
+gcp-region = $ELB_GCP_REGION
+gcp-zone = $ELB_GCP_ZONE
+gcp-network = research
+gcp-subnetwork = subnet-us-east4
+
+[cluster]
+machine-type = n1-standard-32
+num-nodes = 1
+num-cpus = 2
+
+[blast]
+program = blastn
+db = pdbnt
+queries = gs://elastic-blast-samples/queries/MANE/MANE.GRCh38.v0.8.select_refseq_rna.fna
+mem-limit = 1G
+options = -outfmt '7 std staxids'
+EOF
+
+elastic-blast submit --cfg $CFG --results ${results_bucket}
+elastic-blast status --results ${results_bucket}
