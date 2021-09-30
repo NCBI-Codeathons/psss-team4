@@ -29,31 +29,42 @@ gcloud compute instances create ${instance_name} --project=${gcp_project} --zone
     --no-shielded-secure-boot --shielded-vtpm --shielded-integrity-monitoring --reservation-affinity=any
 sleep 15
 
-
-
 SETUP_SCRIPT=`mktemp -t $(basename -s .sh $0)-XXXXXXX`
 trap " /bin/rm -fr $SETUP_SCRIPT " INT QUIT EXIT HUP KILL ALRM
 
 cat > $SETUP_SCRIPT <<-EOF
 #!/bin/bash -xe
 apt-get -yqm update
+
+# Install GCP monitoring agent
+curl -sSO https://dl.google.com/cloudagents/add-monitoring-agent-repo.sh 
+bash add-monitoring-agent-repo.sh --also-install 
+service stackdriver-agent start
+
+# Upgrade python3
+curl -sSO https://dl.google.com/cloudagents/add-monitoring-agent-repo.sh 
 apt-get -yq upgrade python3.8
 update-alternatives --install /usr/bin/python3 python3 /usr/bin/python3.6 1
 sudo update-alternatives --install /usr/bin/python3 python3 /usr/bin/python3.8 2
 
+# Install kubectl
 curl -LO "https://dl.k8s.io/release/$(curl -L -s https://dl.k8s.io/release/stable.txt)/bin/linux/amd64/kubectl"
 install -o root -g root -m 0755 kubectl /usr/local/bin/kubectl
 
+# Install SRA toolkit
 curl -sO https://ftp-trace.ncbi.nlm.nih.gov/sra/sdk/current/sratoolkit.current-ubuntu64.tar.gz
 tar -zxvf sratoolkit.current-ubuntu64.tar.gz -C /usr/local --strip-components 1
 
+# Install pebble search wrapper script
 gsutil -qm cp gs://ncbi-psss-pebblescout-misc/pub/psearch_gcp.sh /usr/local/bin/psearch_gcp.sh
 chmod 755 /usr/local/bin/psearch_gcp.sh
 
+# Install BLAST+
 curl -s "https://ftp.ncbi.nlm.nih.gov/blast/executables/blast+/`curl -L -s https://ftp.ncbi.nlm.nih.gov/blast/executables/blast+/VERSION`/ncbi-blast-`curl -L -s https://ftp.ncbi.nlm.nih.gov/blast/executables/blast+/VERSION`+-x64-linux.tar.gz" -o ncbi-blast.tar.gz
 tar -zxvf ncbi-blast.tar.gz -C /usr/local --strip-components 1 --wildcards '*/bin/*'
 rm -f ncbi-blast.tar.gz kubectl
 
+# Install ElasticBLAST
 apt-get install -yq python3-distutils python3-pip
 pip3 install elastic-blast
 EOF
