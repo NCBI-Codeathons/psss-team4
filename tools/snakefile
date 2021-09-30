@@ -1,0 +1,11 @@
+ids=['NC_045512']
+
+rule all:
+    output:
+        expand('{id}.fa', id=ids)
+
+rule get_query:
+    output:
+        sample=expand('{id}.fa', id=ids)
+    shell:
+        "./workflow.sh {output.sample}"
