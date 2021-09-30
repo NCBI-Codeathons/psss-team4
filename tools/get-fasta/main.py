@@ -1,3 +1,6 @@
+import subprocess
+from tempfile import NamedTemporaryFile
+
 def get_fasta(request):
     """Responds to any HTTP request.
     Args:
@@ -8,9 +11,11 @@ def get_fasta(request):
         `make_response <https://flask.palletsprojects.com/en/1.1.x/api/#flask.Flask.make_response>`.
     """
     request_json = request.get_json()
-    if request.args and 'message' in request.args:
-        return request.args.get('message')
-    elif request_json and 'message' in request_json:
-        return request_json['message']
-    else:
-        return f'Hello World!'
+
+    try:
+        f = NamedTemporaryFile()
+        rc = subprocess.call(f"./get-fasta.sh {f.name}", shell=True)
+    except Exception as e:
+        return str(e)
+
+    return f.read()
