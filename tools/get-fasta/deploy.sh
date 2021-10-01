@@ -1,5 +1,3 @@
-
-
 gcloud functions deploy get_fasta \
     --runtime=python38 \
     --trigger-http \

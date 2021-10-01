@@ -1,5 +1,6 @@
+import os
 import subprocess
-from tempfile import NamedTemporaryFile
+from tempfile import TemporaryDirectory
 
 def get_fasta(request):
     """Responds to any HTTP request.
@@ -12,10 +13,12 @@ def get_fasta(request):
     """
     request_json = request.get_json()
 
+    # request_json['run_accession']
     try:
-        f = NamedTemporaryFile()
-        rc = subprocess.call(f"./get-fasta.sh {f.name}", shell=True)
+        tmp_dir = TemporaryDirectory()
+        subprocess.call(f"./get-fasta.sh {tmp_dir.name} {'ERR164407'}", shell=True, executable='/bin/bash')
     except Exception as e:
         return str(e)
 
-    return f.read()
+    with open(os.path.join(tmp_dir.name, "output.txt")) as f:
+        return f.read()
