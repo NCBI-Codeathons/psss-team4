@@ -108,5 +108,10 @@ queries = $EB_QUERIES
 options = -evalue 0.0001 -outfmt 7 -mt_mode 1
 EOF
 
-elastic-blast submit --cfg $CFG
-elastic-blast status
+# Get auxiliary scripts to wait for ElasticBLAST results
+[ -f submit-and-wait-for-results.sh ] || curl -sO https://raw.githubusercontent.com/ncbi/elastic-blast-demos/master/submit-and-wait-for-results.sh
+[ -x submit-and-wait-for-results.sh ] || chmod +x submit-and-wait-for-results.sh
+
+./submit-and-wait-for-results.sh $CFG 
+parallel gunzip {} ::: *.out.gz
+grep -v "^#" *.out | awk '{if($3 > 95.0 && $4 > 100) print $0}' 
