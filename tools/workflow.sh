@@ -13,7 +13,7 @@ genbank="${1%.fa}"
 results_bucket=${1:-"gs://psss-team4/test-results-$USER"}
 export ELB_RESULTS=$results_bucket
 
-pebble_search_host=34.138.27.177
+pebble_search_host=34.139.36.223
 blastdb_bucket=gs://psss-team4
 
 
@@ -37,6 +37,7 @@ fi
 
 ##############################################################################
 # TODO; filter by some criteria
+head $PEBBLES | awk '{print $1}' > sra_hits.txt
 
 
 ##############################################################################
