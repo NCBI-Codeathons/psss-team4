@@ -21,9 +21,10 @@ export ELB_RESULTS=$results_bucket
 export ELB_GCP_PROJECT=codeathon-psss-2021
 export ELB_GCP_REGION=us-east4
 export ELB_GCP_ZONE=us-east4-a
+export ELB_LOGLEVEL=DEBUG
 
 pebble_search_host=34.139.36.223
-blastdb_bucket="gs://psss-team4/DB"
+blastdb_bucket="$results_bucket/DB"
 
 
 CFG=`mktemp -t $(basename -s .sh $0)-XXXXXXX.ini`
@@ -50,11 +51,13 @@ head $PEBBLES | awk '{print $1}' > sra_hits.txt
 
 
 ##############################################################################
-# TODO; Fetch fasta for the SRA hits, 
-#EB_QUERIES=FIXME
-#EB_QUERIES="/home/madden/CARIBOUFECES/caribou.query-list"
+# Fetch fasta for the SRA hits and deposit them in results bucket as queries for ElasticBLAST 
+bucket_no_prefix=$(echo $results_bucket | sed -e 's,gs://,,')
 parallel -t \
-    curl -s -X POST "https://us-east4-${ELB_GCP_PROJECT}.cloudfunctions.net/get_fasta" -H "Content-Type:application/json" -d '{"run_accession": "{}"}' -o {}.fsa
+    curl -X POST "https://${ELB_GCP_REGION}-${ELB_GCP_PROJECT}.cloudfunctions.net/get_fasta" -H "Content-Type:application/json" -d '{"run_accession": "{}", "upload_bucket": "$bucket_no_prefix", "upload_prefix": "fasta/"}' < sra_hits.txt
+gsutil ls $results_bucket/fasta > ${genbank}_hits.query-list
+gsutil cp ${genbank}_hits.query-list $results_bucket/fasta/${genbank}_hits.query-list
+EB_QUERIES=$results_bucket/fasta/${genbank}_hits.query-list
 
 ##############################################################################
 #use the pebblesearch query as ElasticBLAST target database
