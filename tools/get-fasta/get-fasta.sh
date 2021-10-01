@@ -7,4 +7,3 @@ wget -O "tmp.fastq.gz" "ftp://ftp.sra.ebi.ac.uk/vol1/fastq/${run_accession:0:6}/
 gunzip "tmp.fastq.gz"
 # https://stackoverflow.com/a/10359425
 sed -n '1~4s/^@/>/p;2~4p' "tmp.fastq" > "tmp.fasta"
-wc -l "tmp.fasta" > "output.txt"
