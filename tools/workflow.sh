@@ -12,12 +12,15 @@ shopt -s nullglob
 ##############################################################################
 # INPUT
 genbank="${1%.fa}"
+results_bucket=${2:-"gs://psss-team4/test-results-$USER"}
 
 ##############################################################################
 # Configuration
 # Documentation on results: https://blast.ncbi.nlm.nih.gov/doc/elastic-blast/configuration.html#results
-results_bucket=${2:-"gs://psss-team4/test-results-$USER"}
 export ELB_RESULTS=$results_bucket
+export ELB_GCP_PROJECT=codeathon-psss-2021
+export ELB_GCP_REGION=us-east4
+export ELB_GCP_ZONE=us-east4-a
 
 pebble_search_host=34.139.36.223
 blastdb_bucket="gs://psss-team4/DB"
@@ -30,7 +33,7 @@ trap " /bin/rm -fr $CFG $PEBBLES" INT QUIT EXIT HUP KILL ALRM
 
 # intermediate files
 genbank_fa="$genbank.fa"
-curl "https://eutils.ncbi.nlm.nih.gov/entrez/eutils/efetch.fcgi?db=nuccore&id=$genbank&rettype=fasta" > $genbank_fa
+curl -s "https://eutils.ncbi.nlm.nih.gov/entrez/eutils/efetch.fcgi?db=nuccore&id=$genbank&rettype=fasta" > $genbank_fa
 
 ##############################################################################
 # Pebble search
@@ -50,6 +53,8 @@ head $PEBBLES | awk '{print $1}' > sra_hits.txt
 # TODO; Fetch fasta for the SRA hits, 
 #EB_QUERIES=FIXME
 #EB_QUERIES="/home/madden/CARIBOUFECES/caribou.query-list"
+parallel -t \
+    curl -s -X POST "https://us-central1-${ELB_GCP_PROJECT}.cloudfunctions.net/get_fasta" -H "Content-Type:application/json" -d '{"run_accession": "{}"}' -o {}.fsa
 
 ##############################################################################
 #use the pebblesearch query as ElasticBLAST target database
