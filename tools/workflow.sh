@@ -47,8 +47,10 @@ if [ $num_hits -eq 0 ] ; then
 fi
 
 ##############################################################################
-# TODO; filter by some criteria
-head $PEBBLES | awk '{print $1}' > sra_hits.txt
+# Filtering based on:
+# 1. minimum number of kmers (10)
+# 2. minimum query length covered by kmers (0.0001)
+awk '/^[DES]RR[0-9]{6,7}\t/ { if ($4>10 && $4/$3>0.0001) { print $4 } }' $PEBBLES > sra_hits.txt
 
 
 ##############################################################################
