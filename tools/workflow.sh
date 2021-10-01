@@ -58,7 +58,7 @@ suffix=$(echo $results_bucket | sed -e "s,gs://$bucket_no_prefix/,,")
 cat sra_hits.txt | \
     parallel -t \
         curl -s -X POST \"https://${ELB_GCP_REGION}-${ELB_GCP_PROJECT}.cloudfunctions.net/get_fasta\" -H \"Content-Type:application/json\" -d \'{\"run_accession\": \"{}\", \"upload_bucket\": \"$bucket_no_prefix\", \"upload_prefix\": \"$suffix/fasta/\"}\' 
-gsutil ls $results_bucket/fasta > ${genbank}_hits.query-list
+gsutil ls $results_bucket/fasta |  tee ${genbank}_hits.query-list
 gsutil cp ${genbank}_hits.query-list $results_bucket/fasta/${genbank}_hits.query-list
 EB_QUERIES=$results_bucket/fasta/${genbank}_hits.query-list
 
@@ -113,6 +113,7 @@ queries = $EB_QUERIES
 # Documentation: https://blast.ncbi.nlm.nih.gov/doc/elastic-blast/configuration.html#blast-options
 options = -evalue 0.0001 -outfmt 7 -mt_mode 1
 EOF
+cat -n $CFG
 
 # Get auxiliary scripts to wait for ElasticBLAST results
 [ -f submit-and-wait-for-results.sh ] || curl -sO https://raw.githubusercontent.com/ncbi/elastic-blast-demos/master/submit-and-wait-for-results.sh
