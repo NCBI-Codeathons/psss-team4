@@ -1,5 +1,7 @@
+#!/bin/bash
+# Deploys the Cloud Function contained in this directory
+region=${1:-"us-east4"}
 function_name="get_fasta"
-region="us-east4"
 
 gcloud functions deploy $function_name \
     --runtime=python38 \

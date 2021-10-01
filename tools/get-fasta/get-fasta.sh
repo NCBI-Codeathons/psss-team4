@@ -1,3 +1,4 @@
+#!/bin/bash
 tmp_dir=$1
 run_accession=$2
 
