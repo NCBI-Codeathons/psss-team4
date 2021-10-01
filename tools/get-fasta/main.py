@@ -18,8 +18,7 @@ def get_fasta(request):
     """
     request_json = request.get_json()
 
-    # request_json['run_accession']
-    run_accession = 'ERR164407'
+    run_accession = request_json['run_accession']
     try:
         tmp_dir = TemporaryDirectory()
         subprocess.call(f"./get-fasta.sh {tmp_dir.name} {run_accession}", shell=True, executable='/bin/bash')
