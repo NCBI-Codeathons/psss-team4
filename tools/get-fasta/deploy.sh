@@ -7,7 +7,6 @@ gcloud functions deploy $function_name \
     --memory=1024MB \
     --source . \
     --env-vars-file .env.yml \
-    --region $region \
-    --stage-bucket psss-team4-victorlin
+    --region $region
 
 gcloud functions set-iam-policy $function_name --region $region iam-policy.json
