@@ -50,7 +50,12 @@ fi
 # Filtering based on:
 # 1. minimum number of kmers (10)
 # 2. minimum query length covered by kmers (0.0001)
-awk '/^[DES]RR[0-9]{6,7}\t/ { if ($4>10 && $4/$3>0.0001) { print $4 } }' $PEBBLES > sra_hits.txt
+awk '/^[DES]RR[0-9]{6,7}\t/ { if ($4>10 && $4/$3>0.0001) { print $1 } }' $PEBBLES | tee sra_hits.txt
+num_filtered_hits=`wc -l sra_hits.txt | cut -f 1 -d ' '`
+if [ $num_hits -eq 0 ] ; then
+    echo "No hits remaining after filtering"
+    exit 1
+fi
 
 
 ##############################################################################
