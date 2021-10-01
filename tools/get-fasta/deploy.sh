@@ -6,7 +6,6 @@ gcloud functions deploy $function_name \
     --trigger-http \
     --memory=1024MB \
     --source . \
-    --env-vars-file .env.yml \
     --region $region
 
 gcloud functions set-iam-policy $function_name --region $region iam-policy.json
