@@ -5,3 +5,5 @@ gcloud functions deploy get_fasta \
     --source . \
     --env-vars-file .env.yml \
     --stage-bucket psss-team4-victorlin
+
+gcloud functions set-iam-policy get_fasta iam-policy.json
