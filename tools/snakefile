@@ -1,48 +1,69 @@
+"""
+Run: snakemake -n --configfile snakemake_config.yml
+"""
+
+
 IDS = os.environ.get("QUERY_IDS", 'NC_045512').split()
 
+# FYI: final rule -- output of all other jobs is passed to this dummy job
+# as input to make sure all other jobs have completed successfully.
 rule all:
-    output:
-        expand('{id}.fa', id=IDS)
+    input:
+        expand('alignments_{query}.out', query=IDS)
 
 rule get_query:
     output:
-        sample = expand('{query}.fa', id=IDS)
+        expand('{query}.fa', query=IDS)
+    params:
+        id = lambda wildcards, output: output[0][:-3]
     shell:
         """
-        curl "https://eutils.ncbi.nlm.nih.gov/entrez/eutils/efetch.fcgi?db=nuccore&id=$genbank&rettype=fasta" > {output}
+        curl "https://eutils.ncbi.nlm.nih.gov/entrez/eutils/efetch.fcgi?db=nuccore&id={params.id}&rettype=fasta" > {output}
         """
 
 rule pebble_scout:
+    input: expand('{query}.fa', query=IDS)
     output: 'hits_{query}.txt'
-    input: '{query}.fa'
     params:
         pebble_search_host = config['pebble']['host']
     shell:
         """
-        /usr/local/bin/psearch_gcp --host {params.pebble_search_host} {input} > {output}
+        /usr/local/bin/psearch_gcp.sh --host {params.pebble_search_host} {input} > {output}
+        """
+
+rule filter_pebble_hits:
+    input: expand('hits_{query}.txt', query=IDS)
+    output: 'filtered_hits_{query}.txt'
+    params:
+        min_score = config['pebble']['min_score']
+    shell:
+        """
+        # TODO: apply cutoff
+        cat {input} > {output}
         """
 
 rule build_blast_db:
-    output: expand('{query}.blast_db.{ext}', ext=['nsq', 'nin', 'nhr', 'ndb', 'nto', 'ntf', 'not'])
-    input: '{query}.fa'
+    output: expand('{query}.blast_db.{ext}', query=IDS, ext=['nsq', 'nin', 'nhr', 'ndb', 'nto', 'ntf', 'not'])
+    input: expand('{query}.fa', query=IDS)
+    params:
+        id = lambda wildcards, input: input[0][:-3]
     shell:
         """
-        makeblastdb -dbtype nucl -in {input} -out {query}.blast_db
+        makeblastdb -dbtype nucl -in {input} -out {params.id}.blast_db
         """
 
-rule: elastic_blast:
+rule elastic_blast:
+    output: expand('alignments_{query}.out', query=IDS)
+    input:
+        expand('{query}.blast_db.{ext}', query=IDS, ext=['nsq', 'nin', 'nhr', 'ndb', 'nto', 'ntf', 'not']),
+        expand('filtered_hits_{query}.txt', query=IDS)
     params:
         blastdb_bucket = config['blastdb_bucket']
     shell:
         """
         # Move SRAs to the bucket
         gsutil -qm cp $target_blastdb.* gs://${blastdb_bucket}/$target_blastdb
-        """
 
-rule run_the_rest:
-    output: 'alignments_{query}.out'
-    shell:
-        """
         # ElasticBLAST
         # Documentation on results: https://blast.ncbi.nlm.nih.gov/doc/elastic-blast/configuration.html#results
         results_bucket=${1:-"gs://psss-team4/test-results-$USER"}

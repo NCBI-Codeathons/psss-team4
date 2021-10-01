@@ -1,4 +1,5 @@
 pebble:
-  host: 34.138.27.177
+  host: 34.139.36.223
+  min_score: 0.1
 
 blastdb_bucket: gs://psss-team4
