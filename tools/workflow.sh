@@ -21,6 +21,7 @@ export ELB_RESULTS=$results_bucket
 export ELB_GCP_PROJECT=codeathon-psss-2021
 export ELB_GCP_REGION=us-east4
 export ELB_GCP_ZONE=us-east4-a
+export ELB_LOGLEVEL=DEBUG
 
 pebble_search_host=34.139.36.223
 blastdb_bucket="$results_bucket/DB"
