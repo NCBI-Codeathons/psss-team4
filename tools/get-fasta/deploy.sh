@@ -1,9 +1,12 @@
-gcloud functions deploy get_fasta \
+function_name="get_fasta"
+region="us-east4"
+
+gcloud functions deploy $function_name \
     --runtime=python38 \
     --trigger-http \
     --memory=1024MB \
     --source . \
     --env-vars-file .env.yml \
-    --stage-bucket psss-team4-victorlin
+    --region $region
 
-gcloud functions set-iam-policy get_fasta iam-policy.json
+gcloud functions set-iam-policy $function_name --region $region iam-policy.json
