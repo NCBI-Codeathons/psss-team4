@@ -43,7 +43,7 @@ service stackdriver-agent start
 
 # Upgrade python3
 curl -sSO https://dl.google.com/cloudagents/add-monitoring-agent-repo.sh 
-apt-get -yq upgrade python3.8
+apt-get -yq upgrade python3.8 parallel
 apt-get -yq upgrade python3.8-dev
 pip3 install snakemake
 update-alternatives --install /usr/bin/python3 python3 /usr/bin/python3.6 1
