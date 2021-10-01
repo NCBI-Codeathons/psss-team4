@@ -54,7 +54,7 @@ head $PEBBLES | awk '{print $1}' > sra_hits.txt
 #EB_QUERIES=FIXME
 #EB_QUERIES="/home/madden/CARIBOUFECES/caribou.query-list"
 parallel -t \
-    curl -s -X POST "https://us-central1-${ELB_GCP_PROJECT}.cloudfunctions.net/get_fasta" -H "Content-Type:application/json" -d '{"run_accession": "{}"}' -o {}.fsa
+    curl -s -X POST "https://us-east4-${ELB_GCP_PROJECT}.cloudfunctions.net/get_fasta" -H "Content-Type:application/json" -d '{"run_accession": "{}"}' -o {}.fsa
 
 ##############################################################################
 #use the pebblesearch query as ElasticBLAST target database
