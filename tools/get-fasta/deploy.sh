@@ -3,4 +3,5 @@ gcloud functions deploy get_fasta \
     --trigger-http \
     --memory=1024MB \
     --source . \
+    --env-vars-file .env.yml \
     --stage-bucket psss-team4-victorlin

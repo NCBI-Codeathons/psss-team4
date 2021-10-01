@@ -3,7 +3,7 @@ import subprocess
 from tempfile import TemporaryDirectory
 from google.cloud import storage
 
-bucket_name = 'psss-team4-victorlin'
+bucket_name = os.getenv('BUCKET')
 client = storage.Client()
 bucket = client.get_bucket(bucket_name)
 
