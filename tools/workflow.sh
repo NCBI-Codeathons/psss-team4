@@ -54,7 +54,7 @@ head $PEBBLES | awk '{print $1}' > sra_hits.txt
 # Fetch fasta for the SRA hits and deposit them in results bucket as queries for ElasticBLAST 
 bucket_no_prefix=$(echo $results_bucket | sed -e 's,gs://,,')
 parallel -t \
-    curl -X POST "https://${ELB_GCP_REGION}-${ELB_GCP_PROJECT}.cloudfunctions.net/get_fasta" -H "Content-Type:application/json" -d '{"run_accession": "{}", "upload_bucket": "$bucket_no_prefix", "upload_prefix": "fasta/"}'
+    curl -X POST "https://${ELB_GCP_REGION}-${ELB_GCP_PROJECT}.cloudfunctions.net/get_fasta" -H "Content-Type:application/json" -d '{"run_accession": "{}", "upload_bucket": "$bucket_no_prefix", "upload_prefix": "fasta/"}' < sra_hits
 gsutil ls $results_bucket/fasta > ${genbank}_hits.query-list
 gsutil cp ${genbank}_hits.query-list $results_bucket/fasta/${genbank}_hits.query-list
 EB_QUERIES=$results_bucket/fasta/${genbank}_hits.query-list
