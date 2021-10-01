@@ -1,11 +1,91 @@
-ids=['NC_045512']
+IDS = os.environ.get("QUERY_IDS", 'NC_045512').split()
 
 rule all:
     output:
-        expand('{id}.fa', id=ids)
+        expand('{id}.fa', id=IDS)
 
 rule get_query:
     output:
-        sample=expand('{id}.fa', id=ids)
+        sample = expand('{query}.fa', id=IDS)
     shell:
-        "./workflow.sh {output.sample}"
+        """
+        curl "https://eutils.ncbi.nlm.nih.gov/entrez/eutils/efetch.fcgi?db=nuccore&id=$genbank&rettype=fasta" > {output}
+        """
+
+rule pebble_scout:
+    output: 'hits_{query}.txt'
+    input: '{query}.fa'
+    params:
+        pebble_search_host = config['pebble']['host']
+    shell:
+        """
+        /usr/local/bin/psearch_gcp --host {params.pebble_search_host} {input} > {output}
+        """
+
+rule build_blast_db:
+    output: expand('{query}.blast_db.{ext}', ext=['nsq', 'nin', 'nhr', 'ndb', 'nto', 'ntf', 'not'])
+    input: '{query}.fa'
+    shell:
+        """
+        makeblastdb -dbtype nucl -in {input} -out {query}.blast_db
+        """
+
+rule: elastic_blast:
+    params:
+        blastdb_bucket = config['blastdb_bucket']
+    shell:
+        """
+        # Move SRAs to the bucket
+        gsutil -qm cp $target_blastdb.* gs://${blastdb_bucket}/$target_blastdb
+        """
+
+rule run_the_rest:
+    output: 'alignments_{query}.out'
+    shell:
+        """
+        # ElasticBLAST
+        # Documentation on results: https://blast.ncbi.nlm.nih.gov/doc/elastic-blast/configuration.html#results
+        results_bucket=${1:-"gs://psss-team4/test-results-$USER"}
+        export ELB_RESULTS=$results_bucket
+
+        cat >$CFG <<EOF
+        [cloud-provider]
+        # Documentation: https://blast.ncbi.nlm.nih.gov/doc/elastic-blast/configuration.html#gcp-project
+        gcp-project = $ELB_GCP_PROJECT
+        # Documentation: https://blast.ncbi.nlm.nih.gov/doc/elastic-blast/configuration.html#gcp-region
+        gcp-region = $ELB_GCP_REGION
+        # Documentation: https://blast.ncbi.nlm.nih.gov/doc/elastic-blast/configuration.html#gcp-zone
+        gcp-zone = $ELB_GCP_ZONE
+
+        # These two settings are needed because the GCP project doesn't have a 'default' network
+        # Documentation: https://blast.ncbi.nlm.nih.gov/doc/elastic-blast/configuration.html#gcp-network
+        gcp-network = research
+        # Documentation: https://blast.ncbi.nlm.nih.gov/doc/elastic-blast/configuration.html#gcp-sub-network
+        gcp-subnetwork = subnet-us-east4
+
+        [cluster]
+        # Documentation: https://blast.ncbi.nlm.nih.gov/doc/elastic-blast/configuration.html#machine-type
+        machine-type = n1-standard-32
+        # Documentation: https://blast.ncbi.nlm.nih.gov/doc/elastic-blast/configuration.html#number-of-worker-nodes
+        num-nodes = 10
+        # Documentation: https://blast.ncbi.nlm.nih.gov/doc/elastic-blast/configuration.html#number-of-cpus
+        num-cpus = FIXME
+
+        [blast]
+        # See documentation for supported programs: https://blast.ncbi.nlm.nih.gov/doc/elastic-blast/configuration.html#blast-program
+        program = blastn
+        # See documentation for using your own BLASTDB:
+        # https://blast.ncbi.nlm.nih.gov/doc/elastic-blast/configuration.html#blast-database
+        # https://blast.ncbi.nlm.nih.gov/doc/elastic-blast/tutorials/create-blastdb-metadata.html?highlight=create
+        db = gs://${BLASTDB_BUCKET}/$target_blastdb
+        # See documentation for supported formats: https://blast.ncbi.nlm.nih.gov/doc/elastic-blast/configuration.html#query-sequence-data
+        queries = FIXME
+        # Documentation: https://blast.ncbi.nlm.nih.gov/doc/elastic-blast/configuration.html#memory-limit-for-blast-search 
+        mem-limit = FIXME
+        # Documentation: https://blast.ncbi.nlm.nih.gov/doc/elastic-blast/configuration.html#blast-options
+        options = -outfmt '7 std staxids'
+        EOF
+
+        elastic-blast submit --cfg $CFG
+        elastic-blast status
+        """

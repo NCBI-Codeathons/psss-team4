@@ -1,0 +1,4 @@
+pebble:
+  host: 34.138.27.177
+
+blastdb_bucket: gs://psss-team4
