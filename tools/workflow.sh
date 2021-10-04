@@ -60,6 +60,9 @@ fi
 
 ##############################################################################
 # Fetch fasta for the SRA hits and deposit them in results bucket as queries for ElasticBLAST 
+set +e
+gsutil -qm rm -rf $results_bucket/fasta
+set -e
 bucket_no_prefix=$(echo $results_bucket | sed -e 's,gs://,,' | cut -f 1 -d '/')
 suffix=$(echo $results_bucket | sed -e "s,gs://$bucket_no_prefix/,,")
 cat sra_hits.txt | \
